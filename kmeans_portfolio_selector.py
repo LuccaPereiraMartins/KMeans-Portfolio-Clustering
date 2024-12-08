@@ -17,6 +17,16 @@ def load(
         end_date: str = '2024-09-10',
         timeframe: int = 2
 ) -> pd.DataFrame:
+    """
+    _summary_
+
+    Args:
+        end_date (str, optional): end date to load data over. Defaults to '2024-09-10'.
+        timeframe (int, optional): timeframe to load data over, in multiples of years. Defaults to 2.
+
+    Returns:
+        pd.DataFrame: raw dataframe loaded from yfinance with the tickers, dates and prices
+    """
     
     # Extract a list of current FTSE250 tickers for end_date and timeframe
     # Dependant on website layout and column names
@@ -33,7 +43,7 @@ def load(
                     end=end_date).stack()
 
     # Create a csv from the data to inspect later without having to redownload
-    df.to_csv(f'ftse250_24months_from_{end_date}')
+    df.to_csv(f'ref_data/ftse250_24months_from_{end_date}')
 
 # Manipulate df, calculate features and technical indicators for each stock
 
@@ -81,14 +91,20 @@ def enrich_df(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main():
+    
+    end_date = '2024-11-01'
+    timeframe = 1
+
+    if True:
+        load(
+            timeframe=timeframe,
+        ) 
 
     if False:
-        load() 
+        df = pd.read_csv(f'ref_data/ftse250_24months_from_{end_date}')
+        df = enrich_df(df)
 
-    df = pd.read_csv('ftse250_24months_from_2024-09-10')
-    df = enrich_df(df)
-
-    print(df) 
+        df.to_csv(f'ref_data/enrich_ftse250_24months_from_{end_date}')
 
 if __name__ == "__main__":
     main()
