@@ -4,6 +4,8 @@ import numpy as np
 import pandas_ta
 from pandasgui import show as gui_show
 
+from pipeline import END_DATE, TIMEFRAME
+
 def pre_enrich(
     df: pd.DataFrame,
     ) -> pd.DataFrame:
@@ -136,7 +138,6 @@ def calculate_monthly_returns(
 
 def main():
 
-    end_date: str = '2025-01-01'; timeframe: int = 2
     
     if False:
         data = pd.read_csv('raw_data/ftse250_24months_from_2025-01-01')
@@ -145,14 +146,16 @@ def main():
 
         enriched = enrich(pre_enriched)
 
-        enriched.to_csv(f'enriched_data/ftse250_{int(timeframe * 12)}months_from_{end_date}')
+        enriched.to_csv(f'enriched_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}')
 
-    if False:
-        enriched = pd.read_csv(f'enriched_data/ftse250_{int(timeframe * 12)}months_from_{end_date}')
+    if True:
+        enriched = pd.read_csv(f'enriched_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}')
         
         aggregated = aggregate_monthly(enriched)
 
         aggregated = calculate_monthly_returns(aggregated).dropna()
+
+        aggregated.to_csv(f'aggregated/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}')
         
         
         print(aggregated)
