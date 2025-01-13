@@ -1,14 +1,8 @@
-from statsmodels.regression.rolling import RollingOLS
-import pandas_datareader.data as web
-import matplotlib.pyplot as plt
-import statsmodels.api as sm
+
 import pandas as pd
 import numpy as np
-import datetime as dt
-import yfinance as yf
 import pandas_ta
-import warnings
-
+from pandasgui import show as gui_show
 
 def pre_enrich(
     df: pd.DataFrame,
@@ -16,25 +10,18 @@ def pre_enrich(
 
     """non-financial pre-enriching manipulation steps
 
+    Inputs:
+        raw_data [pd.DataFrame]
+
     Returns:
-        _type_: _description_
+        pre_enrich data [pd.DataFrame]
     """
     
     # Turn column headers to lowercase for ease
     df.columns = df.columns.str.lower()
 
-    # Ensure MultiIndex with proper names
-    if not isinstance(df.index, pd.MultiIndex):
-        df = df.set_index(['date', 'ticker'])
-    
-    # Assign new names for multi-index
-    df.index.names = ['date', 'ticker']
-
-    # Convert the `date` index level to just the date part
-    df.index = df.index.set_levels([
-        pd.to_datetime(df.index.levels[0]).normalize(),
-        df.index.levels[1]
-    ])
+    # Convert the date column to only the date part
+    df['date'] = pd.to_datetime(df['date']).dt.date
 
     return df
 
@@ -43,52 +30,133 @@ def enrich(
     df: pd.DataFrame,
     ) -> pd.DataFrame:
 
+    """financial enriching manipulation steps
+
+    Inputs:
+        pre_enrich data [pd.DataFrame]
+
+    Returns:
+        enriched data [pd.DataFrame]
+    """
 
     df['garman_klass_vol'] = ((np.log(df['high'])-np.log(df['low']))**2)/2-(2*np.log(2)-1)*((np.log(df['adj close'])-np.log(df['open']))**2)
 
-    df['rsi'] = df.groupby(level=1)['adj close'].transform(lambda x: pandas_ta.rsi(close=x, length=20))
+    df['rsi'] = pandas_ta.rsi(df['adj close'], length=20)
 
-    df['bb_low'] = df.groupby(level=1)['adj close'].transform(lambda x: pandas_ta.bbands(close=np.log1p(x), length=20).iloc[:,0])
+    df['bb_low'] = df['adj close'].transform(lambda x: pandas_ta.bbands(close=pd.Series(np.log1p(x)), length=20).iloc[:,2])
                                                             
-    df['bb_mid'] = df.groupby(level=1)['adj close'].transform(lambda x: pandas_ta.bbands(close=np.log1p(x), length=20).iloc[:,1])
+    df['bb_mid'] = df['adj close'].transform(lambda x: pandas_ta.bbands(close=pd.Series(np.log1p(x)), length=20).iloc[:,3])
                                                             
-    df['bb_high'] = df.groupby(level=1)['adj close'].transform(lambda x: pandas_ta.bbands(close=np.log1p(x), length=20).iloc[:,2])
+    df['bb_high'] = df['adj close'].transform(lambda x: pandas_ta.bbands(close=pd.Series(np.log1p(x)), length=20).iloc[:,4])
 
-    df['atr'] = df.groupby(level=1, group_keys=False).apply(compute_atr)
+    df['atr'] = compute_atr(df=df)
 
-    df['macd'] = df.groupby(level=1, group_keys=False)['adj close'].apply(compute_macd)
+    df['macd'] = compute_macd(df=df)
 
     df['dollar_volume'] = (df['adj close']*df['volume'])/1e6
 
     return df
 
 
-def compute_atr(stock_data):
-    atr = pandas_ta.atr(high=stock_data['high'],
-                        low=stock_data['low'],
-                        close=stock_data['close'],
+def compute_atr(
+        df: pd.DataFrame
+) -> pd.Series:
+    
+    atr = pandas_ta.atr(high=df['high'],
+                        low=df['low'],
+                        close=df['close'],
                         length=14)
+    
     return atr.sub(atr.mean()).div(atr.std())
 
 
-def compute_macd(close):
-    macd = pandas_ta.macd(close=close, length=20).iloc[:,0]
+def compute_macd(
+        df: pd.DataFrame
+) -> pd.Series:
+
+    macd = pandas_ta.macd(close=df['adj close'], length=20).iloc[:,0]
+
     return macd.sub(macd.mean()).div(macd.std())
 
 
+def aggregate_monthly(df: pd.DataFrame) -> pd.DataFrame:
+
+    # TODO this can probably be cleaned up in the pre_enrich steps
+    # Set the date column as the index
+    df['date'] = pd.to_datetime(df['date'])
+    df.set_index('date', inplace=True)
+
+    # Select the columns we want to keep
+    training_columns = [
+        'ticker',
+        'dollar_volume',
+        'adj close',
+        'atr',
+        'bb_high',
+        'bb_low',    
+        'bb_mid',    
+        'garman_klass_vol',    
+        'macd',    
+        'rsi',
+    ]
+
+    # Group by ticker and resample monthly for each ticker
+    # dollar_volume -> monthly mean
+    # training_columns -> last value of the month
+
+    data = df.groupby('ticker').apply(
+        lambda group: pd.concat([
+            group['dollar_volume'].resample('M').mean().to_frame('dollar_volume'),
+            group[training_columns].resample('M').last()
+        ], axis=1)
+    ).reset_index(level=0, drop=True)  # Reset the ticker index
+
+    return data
+
+
+def calculate_monthly_returns(
+    df: pd.DataFrame
+) -> pd.DataFrame:
+
+    outlier_cutoff = 0.005
+
+    lags = [1, 2, 3, 6, 9, 12]
+
+    for lag in lags:
+
+        df[f'return_{lag}m'] = (df['adj close']
+                              .pct_change(lag)
+                              .pipe(lambda x: x.clip(lower=x.quantile(outlier_cutoff),
+                                                     upper=x.quantile(1-outlier_cutoff)))
+                              .add(1)
+                              .pow(1/lag)
+                              .sub(1))
+    return df
+
+
 def main():
+
+    end_date: str = '2025-01-01'; timeframe: int = 2
     
-    data = pd.read_csv('raw_data/ftse250_24months_from_2025-01-01')
+    if False:
+        data = pd.read_csv('raw_data/ftse250_24months_from_2025-01-01')
+        
+        pre_enriched = pre_enrich(data)
 
-    pre_enriched = pre_enrich(data)
+        enriched = enrich(pre_enriched)
 
-    pre_enriched.style
-    print(pre_enriched.head(10))
+        enriched.to_csv(f'enriched_data/ftse250_{int(timeframe * 12)}months_from_{end_date}')
 
-    # enriched = enrich(pre_enrich)
+    if False:
+        enriched = pd.read_csv(f'enriched_data/ftse250_{int(timeframe * 12)}months_from_{end_date}')
+        
+        aggregated = aggregate_monthly(enriched)
 
-    # print(enriched.head())
-
+        aggregated = calculate_monthly_returns(aggregated).dropna()
+        
+        
+        print(aggregated)
+        # gui_show(aggregated)
 
 if __name__ == '__main__':
     main()
