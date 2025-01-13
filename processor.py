@@ -91,7 +91,6 @@ def aggregate_monthly(df: pd.DataFrame) -> pd.DataFrame:
     # Select the columns we want to keep
     training_columns = [
         'ticker',
-        'dollar_volume',
         'adj close',
         'atr',
         'bb_high',
