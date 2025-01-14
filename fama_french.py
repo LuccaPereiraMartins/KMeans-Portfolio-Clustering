@@ -65,9 +65,14 @@ def main():
     ff_data = fama_french(df=aggregated)
     rolling = rolling_parameters(ff_data)
 
+    # append then shift the rolling data to be month+1 from rest of data
     ff_data[['mkt-rf', 'smb', 'hml', 'rmw', 'cma']] = rolling
+    ff_data[['mkt-rf', 'smb', 'hml', 'rmw', 'cma']] = (
+    ff_data.groupby('ticker')[['mkt-rf', 'smb', 'hml', 'rmw', 'cma']]
+    .transform(lambda x: x.shift()))
     
     final_df = ff_data.dropna().copy()
+    final_df = final_df.drop(labels=['adj close'], axis=1)
     final_df.index = final_df.index.to_period('M')
 
     # Set 'ticker' as part of the multi-index

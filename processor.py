@@ -2,9 +2,9 @@
 import pandas as pd
 import numpy as np
 import pandas_ta
-from pandasgui import show as gui_show
 
-from pipeline import END_DATE, TIMEFRAME
+
+
 
 def pre_enrich(
     df: pd.DataFrame,
@@ -83,8 +83,6 @@ def compute_macd(
 
 def aggregate_monthly(df: pd.DataFrame) -> pd.DataFrame:
 
-    # TODO this can probably be cleaned up in the pre_enrich steps
-    # Set the date column as the index
     df['date'] = pd.to_datetime(df['date'])
     df.set_index('date', inplace=True)
 
@@ -110,7 +108,10 @@ def aggregate_monthly(df: pd.DataFrame) -> pd.DataFrame:
             group['dollar_volume'].resample('M').mean().to_frame('dollar_volume'),
             group[training_columns].resample('M').last()
         ], axis=1)
-    ).reset_index(level=0, drop=True)  # Reset the ticker index
+    )
+
+    # reset the indexes
+    data = data.reset_index(level=1,drop=False).reset_index(drop=True)  
 
     return data
 
@@ -132,11 +133,14 @@ def calculate_monthly_returns(
                               .add(1)
                               .pow(1/lag)
                               .sub(1))
-    return df
+    
+    return df.dropna()
 
 
 def main():
 
+    END_DATE = '2025-01-01'
+    TIMEFRAME = 2
     
     if False:
         data = pd.read_csv('raw_data/ftse250_24months_from_2025-01-01')
@@ -152,13 +156,14 @@ def main():
         
         aggregated = aggregate_monthly(enriched)
 
-        aggregated = calculate_monthly_returns(aggregated).dropna()
+        aggregated = calculate_monthly_returns(aggregated)
 
         aggregated.to_csv(f'aggregated/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}')
         
         
         print(aggregated)
         # gui_show(aggregated)
+
 
 if __name__ == '__main__':
     main()

@@ -27,6 +27,7 @@ def load(
     # Create a csv from the data to inspect later without having to redownload
     df.to_csv(f'raw_data/ftse250_{int(timeframe * 12)}months_from_{end_date}')
 
+    return df
 
 
 def main():
