@@ -151,7 +151,7 @@ def main():
 
         enriched.to_csv(f'enriched_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}')
 
-    if True:
+    if False:
         enriched = pd.read_csv(f'enriched_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}')
         
         aggregated = aggregate_monthly(enriched)

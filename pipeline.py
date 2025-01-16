@@ -3,7 +3,7 @@ import pandas as pd
 
 import processor
 from load_data import load
-from kmeans_model import cluster, pipeline_cluster, plot_clusters
+from kmeans_processor import cluster, pipeline_cluster, plot_clusters
 
 
 """
