@@ -1,6 +1,4 @@
 
-import math
-
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -19,7 +17,7 @@ Thoughts:
 def raw_returns(
         end_date: str = '2025-01-01',
         timeframe: int = 2  
-) -> np.array:
+) -> pd.DataFrame:
     
     start_date = pd.to_datetime(end_date)-pd.DateOffset(365*timeframe)  
 
@@ -27,99 +25,115 @@ def raw_returns(
                     start=start_date,
                     end=end_date)
     
-    return_ftse_250 = ftse_250[['Adj Close']].pct_change().dropna()
-    return_ftse_250 = np.array(return_ftse_250).cumsum()
+    return_ftse_250 = ftse_250[['Adj Close']].pct_change().fillna(value=float(0))
 
     return return_ftse_250
 
 
 def portfolio_returns(
-        clustered_data,
-):
+        data,
+        portfolio_number: int = 3,
+) -> pd.DataFrame:
     
-    _portfolio_returns = clustered_data
-    return _portfolio_returns
+    data = pd.read_csv('temp_clustered.csv', index_col=('date','ticker'))
+
+    pf_cluster : pd.DataFrame = data[data['cluster'] == portfolio_number].copy()
+    dates = pf_cluster.index.get_level_values('date').unique().tolist()
+
+    final = pd.Series()
+
+    for date in dates:
+
+        pd_date = pd.to_datetime(str(date))
+        # get the first and last business day for that month
+        first_bday = pd_date + pd.offsets.BMonthBegin(0)
+        last_bday = pd_date + pd.offsets.BMonthEnd(0)
+        # get the list of tickers in that cluster for that month
+        tickers = pf_cluster.loc[date].index.tolist()
+        # get the raw data for those tickers (this could be done outside of the loop)
+        prices_for_month = yf.download(tickers=tickers,
+                    start=first_bday,
+                    end=last_bday)
+        
+        # find the underliers individual daily percentage change
+        filtered_data = prices_for_month['Adj Close'][tickers].pct_change().fillna(value=float(0))
+        # here is where we can introduce weighting and further portfolio optimization
+        # for now just weight every stock equally hence take arithmetic mean
+        final = pd.concat([final, np.mean(filtered_data, axis=1)])
+
+    return final
 
 
-def plot_returns(
+def create_plot(
         raw_returns: np.array,
-        portfolio_returns: np.array = None,
 ):
     
-    plt.plot(raw_returns)
-    plt.plot(portfolio_returns)
-    plt.show()
 
+    # plot the FTSE250 returns as a benchmark
+    plt.plot(raw_returns.cumsum(), color='blue', label='FTSE 250')
+
+    # Add labels and legend
+    plt.xlabel('Date', fontsize=12)
+    plt.ylabel('Percentage Change (%)', fontsize=12)
+    plt.title('Performance Comparison', fontsize=14)
+    plt.legend(fontsize=10, loc='upper left')
+
+    # Enhance the grid and layout
+    plt.grid(alpha=0.5, axis='both')
+    plt.tight_layout()
+
+
+def plot_pf_return(
+        portfolio_returns,
+        portfolio_number: int = 3,
+        daily_change: bool = False
+):
+
+    if daily_change:        
+        plt.plot(portfolio_returns, color=(0.5 - portfolio_number/100, 0.5 - portfolio_number/100, 0.5 - portfolio_number/100),
+                  linestyle='dashed', alpha=0.5, label=f'Daily Change of Portfolio #{portfolio_number}')
+    plt.plot(portfolio_returns.cumsum(), color=(1 - portfolio_number/20, 0.5 + portfolio_number/20, 0 + portfolio_number/20), alpha = 0.75, label=f'Portfolio #{portfolio_number}')
 
 def main():
 
     pd.set_option("display.max_rows", 50)
-
-    # plot_raw_returns(raw_returns())
-
-    # read in the processed data with multi-index
-    data = pd.read_csv('temp_clustered.csv', index_col=('date','ticker'))
     
-    pf_cluster_3 : pd.DataFrame = data[data['cluster'] == 3].copy()
-    dates = pf_cluster_3.index.get_level_values('date').unique().tolist()
-    dict_pf_cluster_3 : dict = {}
-    returns_pf_3: list[float] = []
-    daily_returns_pf3 : list[float] = []
-    for date in dates:
+    # save the results to avoid multiple querying
+    if False:
 
-        first_bday = pd.to_datetime(str(date)) + pd.offsets.BMonthBegin(0)
-        last_bday = pd.to_datetime(str(date)) + pd.offsets.BMonthEnd(0)
-        # get the list of tickers in that cluster for that month
-        tickers = pf_cluster_3.loc[date].index.tolist()
-        # get the raw data for those tickers
-        prices_for_month = yf.download(tickers=tickers,
-                    start=first_bday,
-                    end=last_bday)
-        # get the percentage return for each of those tickers for that month
-        pct_change_by_ticker = []
-        daily_pct_change_by_ticker = []
-        for index, ticker in enumerate(tickers):
+        _raw_returns = raw_returns()
+        _raw_returns.to_csv('raw_data/FTSE250_ticker_daily_change.csv')
 
-            # daily frequency
-            indv_pct_change = prices_for_month['Adj Close'][str(ticker)].pct_change().dropna()
-            if not any(math.isnan(x) for x in indv_pct_change) \
-                and not indv_pct_change.empty \
-                and not all(float(x) == float(0) for x in indv_pct_change):
-                daily_pct_change_by_ticker.append(list(indv_pct_change.values))
+        data = pd.read_csv('temp_clustered.csv', index_col=('date','ticker'))
+        portfolio_3_returns = portfolio_returns(data=data,portfolio_number=3)
+        portfolio_3_returns.to_csv('processed_data/portfolio_3_daily_change.csv')
 
-            if not prices_for_month['Adj Close'][str(ticker)].empty:
-                first = prices_for_month['Adj Close'][str(ticker)].values[0]
-                last = prices_for_month['Adj Close'][str(ticker)].values[-1]
-                pct_change = float((last - first) / first)
-                # only append values that aren't nan
-                if not math.isnan(pct_change): pct_change_by_ticker.append(pct_change)
+    # TODO load in the data from the above csv files instead of calling yfinance API every time
 
-        # here is where we can introduce weighting and further portfolio optimization
-        # for now just weight every stock equally hence take arithmetic mean
-        weighted_change = np.mean(pct_change_by_ticker)
-        returns_pf_3.append(weighted_change)
+    if False:
+        # plot the benchmark index performance and set up graph
+        create_plot(
+            raw_returns=_raw_returns,
+        )
 
+    # plot a specific portfolio
+    if False:
+        plot_pf_return(
+            portfolio_returns=portfolio_returns(portfolio_number=3),
+            portfolio_number=3,
+        )
 
-        averaged_daily_pct_change_by_ticker = np.mean(np.array(daily_pct_change_by_ticker), axis=1)
-        daily_returns_pf3.extend(averaged_daily_pct_change_by_ticker)
-        
-        # append all this information to a possibly useless dictionary
-        dict_pf_cluster_3[date] = {
-            'ticker' : tickers,
-            'pct_change_by_ticker': pct_change_by_ticker,
-            'avg_return' : weighted_change,
-            }
+    # plot all portfolios
+    if False:
+        for pf in [0,1,2,3]:
+            plot_pf_return(
+                portfolio_returns=portfolio_returns(data, pf),
+                portfolio_number=pf
+            )
 
-    pf3_cum = np.array(returns_pf_3).cumsum()
-    daily_pf3_cum = np.array(daily_returns_pf3).cumsum()
-    _raw_returns = raw_returns()
-    
-    plt.plot(pf3_cum)
-
-    plot_returns(
-        raw_returns = _raw_returns,
-        portfolio_returns = daily_pf3_cum,
-    )
+    if False:
+        plt.legend(fontsize=10, loc='upper left')
+        plt.show()
 
 
 
