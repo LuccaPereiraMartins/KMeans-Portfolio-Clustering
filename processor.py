@@ -5,7 +5,6 @@ import pandas_ta
 
 
 
-
 def pre_enrich(
     df: pd.DataFrame,
     ) -> pd.DataFrame:

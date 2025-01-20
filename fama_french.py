@@ -4,8 +4,6 @@ import pandas_datareader.data as web
 import statsmodels.api as sm
 from statsmodels.regression.rolling import RollingOLS
 
-from pipeline import END_DATE, TIMEFRAME
-
 
 def fama_french(
     df: pd.DataFrame,
@@ -58,6 +56,9 @@ def rolling_parameters(
 
 
 def main():
+
+    END_DATE = '2025-01-01'
+    TIMEFRAME = 2
 
     aggregated = pd.read_csv(f'aggregated/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}',
                              index_col='date')
