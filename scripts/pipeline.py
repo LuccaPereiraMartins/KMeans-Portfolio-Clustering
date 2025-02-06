@@ -41,6 +41,9 @@ def main():
     # pass aggregated through fama-french script
     # clear issues with indexes, worth going through and changing this in functions
 
+    # TODO continue refactoring the above (and below) so that pipeline can be ran
+    # from this script rather than the mains of each individual script
+
     ff_data = None
     rolling_ff_data = None
     clustered_data = None
