@@ -25,7 +25,7 @@ def raw_returns(
                     start=start_date,
                     end=end_date)
     
-    return_ftse_250 = ftse_250[['Adj Close']].pct_change().fillna(value=float(0))
+    return_ftse_250 = ftse_250[['Close']].pct_change().fillna(value=float(0))
 
     return return_ftse_250
 
@@ -56,7 +56,7 @@ def portfolio_returns(
                     end=last_bday)
         
         # find the underliers individual daily percentage change
-        filtered_data = prices_for_month['Adj Close'][tickers].pct_change().fillna(value=float(0))
+        filtered_data = prices_for_month['Close'][tickers].pct_change().fillna(value=float(0))
         # here is where we can introduce weighting and further portfolio optimization
         # for now just weight every stock equally hence take arithmetic mean
         final = pd.concat([final, np.mean(filtered_data, axis=1)])
@@ -99,7 +99,7 @@ def main():
     pd.set_option("display.max_rows", 50)
     
     # save the results to avoid multiple querying
-    if False:
+    if True:
 
         _raw_returns = raw_returns()
         _raw_returns.to_csv('raw_data/FTSE250_ticker_daily_change.csv')
@@ -110,16 +110,16 @@ def main():
 
     # TODO load in the data from the above csv files instead of calling yfinance API every time
 
-    if False:
+    if True:
         # plot the benchmark index performance and set up graph
         create_plot(
             raw_returns=_raw_returns,
         )
 
     # plot a specific portfolio
-    if False:
+    if True:
         plot_pf_return(
-            portfolio_returns=portfolio_returns(portfolio_number=3),
+            portfolio_returns=portfolio_returns(data=data,portfolio_number=3),
             portfolio_number=3,
         )
 
@@ -131,7 +131,7 @@ def main():
                 portfolio_number=pf
             )
 
-    if False:
+    if True:
         plt.legend(fontsize=10, loc='upper left')
         plt.show()
 
