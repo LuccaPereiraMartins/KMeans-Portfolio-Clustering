@@ -118,9 +118,10 @@ def main():
 
     # plot a specific portfolio
     if True:
+        pf_num = 3
         plot_pf_return(
-            portfolio_returns=portfolio_returns(data=data,portfolio_number=3),
-            portfolio_number=3,
+            portfolio_returns=portfolio_returns(data=data,portfolio_number=pf_num),
+            portfolio_number=pf_num,
         )
 
     # plot all portfolios
