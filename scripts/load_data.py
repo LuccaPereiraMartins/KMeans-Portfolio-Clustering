@@ -30,6 +30,28 @@ def load(
     return df
 
 
+
+
+# TODO complete the below function
+
+def load_from_db(
+    start_date: str,
+    end_date: str,      
+):
+    
+    df = pd.read_sql(
+        sql = 
+        f"""
+        select * from raw.market_data
+        where 
+            date between {start_date} and {end_date}
+        order by date asc, ticker asc
+        """
+        ,
+        con=None
+    )
+
+
 def main():
     pass
 

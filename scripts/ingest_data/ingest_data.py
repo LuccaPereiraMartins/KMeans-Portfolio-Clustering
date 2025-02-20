@@ -1,10 +1,6 @@
 
 import sqlalchemy as sqa
 import pandas as pd
-import yfinance as yf
-
-
-
 
 
 
@@ -13,19 +9,23 @@ def connect_to_db(
         db_url: str = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/postgres"
 ):
     
+    """
+    Connect to the postgres database, by keeping seperate we avoid having to reconnect several times
+    """
+
     engine = sqa.create_engine(db_url)
     return engine
 
 
 def bulk_upload(
         engine: sqa.Engine
-):
-
-    # database connection details
-    db_url = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/postgres"
-
-    # create SQLAlchemy engine
-    engine = sqa.create_engine(db_url)
+) -> None:
+    
+    """
+    TEMP
+    
+    Take the csv file which holds the raw data we are interested in and upload it to postgres
+    """
 
     # drop existing table if exists then create table with right params
     with engine.connect() as conn:
@@ -34,7 +34,7 @@ def bulk_upload(
             conn.execute(sqa.text(sql_query))
             conn.commit()
 
-    # TODO replace the below with data retrieved from yf api call
+    # TODO replace the below with data retrieved from yf or alpha vantage api call
     # this might require some tidying between the api call and upload, similar to what's in load_data.py
 
     # load in data to df from csv
@@ -45,7 +45,7 @@ def bulk_upload(
     initial_data.to_sql('market_data', engine, schema='raw', if_exists='append', index=False)
 
     # check the upload was successful
-    results = pd.read_sql('select * from raw.market_data', engine)
+    results = pd.read_sql('select * from raw.market_data limit 10', engine)
     assert not results.isnull().values.any(), "Upload failed: NULL values found"
 
     engine.dispose()
@@ -53,6 +53,7 @@ def bulk_upload(
 
 def incremental_upload():
     pass
+
 
 
 # TODO consider converting this to a class and methods to make connecting and closing easier
@@ -71,7 +72,12 @@ class database():
 
 
 def main():
-    pass
+    
+    if True:
+
+        engine = connect_to_db()
+        bulk_upload(engine)
+
 
 
 if __name__ == '__main__':
