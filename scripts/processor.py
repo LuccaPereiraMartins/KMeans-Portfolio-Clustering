@@ -137,31 +137,7 @@ def calculate_monthly_returns(
 
 
 def main():
-
-    END_DATE = '2025-01-01'
-    TIMEFRAME = 2
-    
-    if False:
-        data = pd.read_csv('raw_data/ftse250_24months_from_2025-01-01')
-        
-        pre_enriched = pre_enrich(data)
-
-        enriched = enrich(pre_enriched)
-
-        enriched.to_csv(f'enriched_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}')
-
-    if False:
-        enriched = pd.read_csv(f'enriched_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}')
-        
-        aggregated = aggregate_monthly(enriched)
-
-        aggregated = calculate_monthly_returns(aggregated)
-
-        aggregated.to_csv(f'aggregated/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}')
-        
-        
-        print(aggregated)
-        # gui_show(aggregated)
+    pass
 
 
 if __name__ == '__main__':

@@ -20,7 +20,7 @@ def fama_french(
 
     # ensure both indexes are datetimes ahead of merging
     ff_data.index = pd.to_datetime(ff_data.index.to_timestamp())
-    df.index = pd.to_datetime(df.index)
+    df.set_index('date', inplace=True)
 
     # resampling to last day of month and divide by 100
     ff_data = ff_data.resample('M').last().div(100)
@@ -55,16 +55,11 @@ def rolling_parameters(
     return params_df
 
 
-def main():
-
-    END_DATE = '2025-01-01'
-    TIMEFRAME = 2
-
-    aggregated = pd.read_csv(f'aggregated/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}',
-                             index_col='date')
-
-    ff_data = fama_french(df=aggregated)
-    rolling = rolling_parameters(ff_data)
+def append_and_shift(
+        ff_data: pd.DataFrame,
+        rolling: pd.DataFrame
+) -> pd.DataFrame:
+    
 
     # append then shift the rolling data to be month+1 from rest of data
     ff_data[['mkt-rf', 'smb', 'hml', 'rmw', 'cma']] = rolling
@@ -78,9 +73,12 @@ def main():
 
     # Set 'ticker' as part of the multi-index
     final_df = final_df.set_index('ticker', append=True)
+    
+    return final_df
 
-    final_df.to_csv('final_df.csv')
-    print(final_df)
+
+def main():
+    pass
 
 
 if __name__ == '__main__':

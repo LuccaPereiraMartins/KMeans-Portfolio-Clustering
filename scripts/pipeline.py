@@ -2,21 +2,9 @@
 import pandas as pd
 
 import processor
-from load_data import load
-from kmeans_processor import cluster, pipeline_cluster, plot_clusters
+import fama_french
 
 
-"""
-Thoughts:
-
-take a month's worth of data and use it to group similar stocks 
-based on the 20 features calculated
-repeat for each month then select a portfolio based on
-Efficient Frontier max sharpe ratio optimization
-compare against the wider FTSE250 index
-
-move all the processes into the pipeline and tidy the local data
-"""
 
 def main():
 
@@ -26,33 +14,24 @@ def main():
 
     
     try:
-        raw_data = pd.read_csv(f'raw_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}')
+        raw_data = pd.read_csv(f'raw_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}.csv')
     except:
-        raw_data = load(
-            end_date=END_DATE,
-            timeframe=TIMEFRAME,
-            )
+        # consider reverting to load function
+        return 'fail'
 
+
+    raw_data = pd.read_csv(f'raw_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}.csv')
     pre_enriched_data = processor.pre_enrich(raw_data)
     enriched_data = processor.enrich(pre_enriched_data)
     aggregated_data = processor.aggregate_monthly(enriched_data)
     aggregated_w_monthly_data = processor.calculate_monthly_returns(aggregated_data)
+    ff_data = fama_french.fama_french(aggregated_w_monthly_data)
+    rolling_ff_data = fama_french.rolling_parameters(ff_data)
+    final_df = fama_french.append_and_shift(ff_data,rolling_ff_data)
 
-    # pass aggregated through fama-french script
-    # clear issues with indexes, worth going through and changing this in functions
+    print(final_df.head())
 
-    # TODO continue refactoring the above (and below) so that pipeline can be ran
-    # from this script rather than the mains of each individual script
-
-    ff_data = None
-    rolling_ff_data = None
-    clustered_data = None
-
-
-    data = pd.read_csv('final_df.csv')
-    data = data.set_index(['date','ticker'])
-
-    print(data.loc[('2024-01')])
+    # TODO now for the clustering part...
 
 
 if __name__ == '__main__':
