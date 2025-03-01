@@ -23,7 +23,7 @@ def fama_french(
     df.set_index('date', inplace=True)
 
     # resampling to last day of month and divide by 100
-    ff_data = ff_data.resample('M').last().div(100)
+    ff_data = ff_data.resample('ME').last().div(100)
 
     # merge the two datasources with a left outer merge
     # this keeps all the columns from df and copies across

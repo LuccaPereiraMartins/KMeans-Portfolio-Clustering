@@ -35,7 +35,7 @@ def portfolio_returns(
         portfolio_number: int = 3,
 ) -> pd.DataFrame:
     
-    data = pd.read_csv('temp_clustered.csv', index_col=('date','ticker'))
+    # data = pd.read_csv('temp_clustered.csv', index_col=('date','ticker'))
 
     pf_cluster : pd.DataFrame = data[data['cluster'] == portfolio_number].copy()
     dates = pf_cluster.index.get_level_values('date').unique().tolist()
@@ -65,16 +65,17 @@ def portfolio_returns(
 
 
 def create_plot(
-        raw_returns: np.array,
+        x_data,
+        y_data,
 ):
     
 
     # plot the FTSE250 returns as a benchmark
-    plt.plot(raw_returns.cumsum(), color='blue', label='FTSE 250')
+    plt.plot(x_data, y_data, color='blue', label='FTSE 250')
 
     # Add labels and legend
     plt.xlabel('Date', fontsize=12)
-    plt.ylabel('Percentage Change (%)', fontsize=12)
+    plt.ylabel('Cumulative Percentage Change (%)', fontsize=12)
     plt.title('Performance Comparison', fontsize=14)
     plt.legend(fontsize=10, loc='upper left')
 
@@ -94,30 +95,26 @@ def plot_pf_return(
                   linestyle='dashed', alpha=0.5, label=f'Daily Change of Portfolio #{portfolio_number}')
     plt.plot(portfolio_returns.cumsum(), color=(1 - portfolio_number/20, 0.5 + portfolio_number/20, 0 + portfolio_number/20), alpha = 0.75, label=f'Portfolio #{portfolio_number}')
 
+
 def main():
 
     pd.set_option("display.max_rows", 50)
     
     # save the results to avoid multiple querying
-    if True:
+    if False:
 
         _raw_returns = raw_returns()
         _raw_returns.to_csv('raw_data/FTSE250_ticker_daily_change.csv')
 
-        data = pd.read_csv('temp_clustered.csv', index_col=('date','ticker'))
-        portfolio_3_returns = portfolio_returns(data=data,portfolio_number=3)
-        portfolio_3_returns.to_csv('processed_data/portfolio_3_daily_change.csv')
 
-    # TODO load in the data from the above csv files instead of calling yfinance API every time
-
-    if True:
+    if False:
         # plot the benchmark index performance and set up graph
         create_plot(
             raw_returns=_raw_returns,
         )
 
     # plot a specific portfolio
-    if True:
+    if False:
         pf_num = 3
         plot_pf_return(
             portfolio_returns=portfolio_returns(data=data,portfolio_number=pf_num),
@@ -132,7 +129,8 @@ def main():
                 portfolio_number=pf
             )
 
-    if True:
+    # display the plots
+    if False:
         plt.legend(fontsize=10, loc='upper left')
         plt.show()
 

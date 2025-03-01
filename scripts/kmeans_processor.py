@@ -71,9 +71,9 @@ def pipeline_cluster(
         clusters: int = 5
 ) -> pd.DataFrame:
     
+    
+    # TODO change this to take a clustering model as a parameter
 
-    # might need a line to set the multi-index
-    # LINE
     # apply the clustering model 
     data = df.dropna().groupby('date').apply(cluster)
 
