@@ -58,25 +58,33 @@ def incremental_upload():
 
 # TODO consider converting this to a class and methods to make connecting and closing easier
 
-class database():
+class engine():
 
     def __init__(self, db_url):
-        self.engine: sqa.Engine = sqa.create_engine(db_url)
+        self: sqa.Engine = sqa.create_engine(db_url)
 
-    def conn(self):
-        self.engine.connect()
+    def conn(self, engine):
+        self.connect()
     
-    def disconnect(self):
-        self.engine.dispose()
+    def disconnect(self, engine):
+        self.dispose()
 
 
 
 def main():
     
-    if True:
+    if False:
 
         engine = connect_to_db()
         bulk_upload(engine)
+        
+    if True:
+        
+        engine = engine()
+        engine = engine.connect()
+        
+        # run test query
+        # engine.dispose()
 
 
 
