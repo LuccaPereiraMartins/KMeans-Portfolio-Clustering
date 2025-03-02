@@ -57,6 +57,7 @@ def main():
     # for pf in CLUSTERS:
 
     # TODO fix the below
+    # TODO find a way to avoid using yfinance API every time we evaluate a portfolio
 
     # pf = 3
     # pf_returns = portfolio_selector.portfolio_returns(
@@ -69,10 +70,11 @@ def main():
     #     daily_change=False
     # )
 
-    # TODO change the datatypes when reading in csv rather than after
+    temp_pf_returns = pd.read_csv(
+        'processed_data\portfolio_3_daily_change.csv',
+        parse_dates=['Date']
+    )
 
-    temp_pf_returns = pd.read_csv('processed_data\portfolio_3_daily_change.csv')
-    temp_pf_returns['Date'] = pd.to_datetime(temp_pf_returns['Date'])
     portfolio_selector.create_plot(
         x_data=temp_pf_returns['Date'],
         y_data=temp_pf_returns['Close'].cumsum())
