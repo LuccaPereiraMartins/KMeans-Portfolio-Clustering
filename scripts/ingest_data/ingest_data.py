@@ -1,4 +1,3 @@
-
 import sqlalchemy as sqa
 import pandas as pd
 
@@ -56,36 +55,30 @@ def incremental_upload():
 
 
 
-# TODO consider converting this to a class and methods to make connecting and closing easier
 
-class engine():
+class Engine():
 
     def __init__(self, db_url):
-        self: sqa.Engine = sqa.create_engine(db_url)
+        self.engine: sqa.Engine = sqa.create_engine(db_url)
 
-    def conn(self, engine):
-        self.connect()
+    def connect(self):
+        return self.engine.connect()
     
-    def disconnect(self, engine):
-        self.dispose()
+    def disconnect(self):
+        self.engine.dispose()
 
 
 
 def main():
+    db_url = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/postgres"
+    engine_instance = Engine(db_url)
     
-    if False:
-
-        engine = connect_to_db()
-        bulk_upload(engine)
-        
-    if True:
-        
-        engine = engine()
-        engine = engine.connect()
-        
+    with engine_instance.connect() as conn:
         # run test query
-        # engine.dispose()
-
+        results = pd.read_sql('select * from raw.market_data limit 10', conn)
+        print(results)
+    
+    engine_instance.disconnect()
 
 
 if __name__ == '__main__':

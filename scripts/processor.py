@@ -104,8 +104,8 @@ def aggregate_monthly(df: pd.DataFrame) -> pd.DataFrame:
 
     data = df.groupby('ticker').apply(
         lambda group: pd.concat([
-            group['dollar_volume'].resample('M').mean().to_frame('dollar_volume'),
-            group[training_columns].resample('M').last()
+            group['dollar_volume'].resample('ME').mean().to_frame('dollar_volume'),
+            group[training_columns].resample('ME').last()
         ], axis=1)
     )
 

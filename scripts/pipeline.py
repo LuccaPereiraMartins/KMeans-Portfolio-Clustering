@@ -1,3 +1,4 @@
+import os
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -18,10 +19,12 @@ def main():
 
     
     # load the raw data
-    try:
-        raw_data = pd.read_csv(f'raw_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}.csv')
-    except:
-        raw_data = load_data.load(end_date=END_DATE, timeframe=TIMEFRAME)
+    filepath = f'raw_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}.csv'
+    if os.path.exists(filepath):
+        try:
+            raw_data = pd.read_csv(filepath)
+        except FileNotFoundError:
+            raw_data = load_data.load(end_date=END_DATE, timeframe=TIMEFRAME)
 
     # processor
     pre_enriched_data = processor.pre_enrich(raw_data)
@@ -46,7 +49,7 @@ def main():
         x_data=_raw_returns['Date'],
         y_data=_raw_returns['Close'].cumsum())
     
-    for pf in range(0,CLUSTERS,1):
+    for pf in range(CLUSTERS):
 
         pf_returns = portfolio_selector.portfolio_returns(
             data=clustered_data,
@@ -58,8 +61,7 @@ def main():
             daily_change=False
         )
 
-    plt.show()
-
 
 if __name__ == '__main__':
     main()
+    plt.show()
