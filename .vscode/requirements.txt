@@ -1,6 +1,9 @@
 numpy==1.26.4
 pandas==2.2.2
 pandas_ta==0.3.14b
+pandasgui
 yfinance
 pandas_datareader
 statsmodels
+sci-kit-learn
+matplotlib

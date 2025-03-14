@@ -7,6 +7,7 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import RobustScaler,StandardScaler
 
+
 def cluster(
         df: pd.DataFrame,
         # model,
@@ -83,35 +84,11 @@ def pipeline_cluster(
     data.drop('delete', axis=1,inplace=True)
     data = data.set_index(['date','ticker'])
 
-    return df
+    return data
 
 
 def main():
-
-
-    if True:
-        # read in the processed data with multi-index
-        data = pd.read_csv('final_df.csv', index_col=('date','ticker'))
-        data = data.drop(columns=['dollar_volume'])
-        # apply the clustering algorithm to each month
-        data = data.dropna().groupby('date').apply(cluster)
-        # reset the index to remove duplicated date column
-        data.index.names = ['delete','date','ticker']
-        data = data.reset_index(drop=False)
-        data.drop('delete', axis=1,inplace=True)
-        data.to_csv('temp_clustered.csv', index=False)
-        data = data.set_index(['date','ticker'])
-        
-
-        print(data)
-        print(data.loc['2024-06'])
-
-        plot_clusters(
-            df=data.loc['2024-03'],
-            )
-
-    if False:
-        gui_show(data)
+    pass
 
 
 if __name__ == '__main__':
