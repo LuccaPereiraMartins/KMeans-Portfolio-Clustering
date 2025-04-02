@@ -37,9 +37,9 @@ def main():
     rolling_ff_data = fama_french.rolling_parameters(ff_data)
     final_df = fama_french.append_and_shift(ff_data,rolling_ff_data)
 
-    # clustering
-    clustered_data = kmeans_processor.pipeline_cluster(final_df)
-    clustered_data.to_csv('processed_data/clustered_data.csv')
+    # clustering (pipeline_cluster can take an argument 'clustering_model' if necessary)
+    clustered_data = kmeans_processor.pipeline_cluster(final_df,clusters=CLUSTERS)
+    # clustered_data.to_csv('processed_data/clustered_data.csv')
 
     # plotting
     _raw_returns = pd.read_csv('raw_data/FTSE250_ticker_daily_change.csv')
