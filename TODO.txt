@@ -1,0 +1,3 @@
+visualise the clusters (for several months) to see what they are grouping and if they make sense
+See if they are too noisy, consider different clustering methods, investigate what the best and
+worst performing clusters actually feature
