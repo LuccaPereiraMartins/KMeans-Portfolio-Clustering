@@ -39,7 +39,7 @@ def main():
 
     # clustering (pipeline_cluster can take an argument 'clustering_model' if necessary)
     clustered_data = kmeans_processor.pipeline_cluster(final_df,clusters=CLUSTERS)
-    # clustered_data.to_csv('processed_data/clustered_data.csv')
+    clustered_data.to_csv('processed_data/clustered_data.csv')
 
     # plotting
     _raw_returns = pd.read_csv('raw_data/FTSE250_ticker_daily_change.csv')

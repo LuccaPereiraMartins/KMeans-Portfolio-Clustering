@@ -1,6 +1,6 @@
 
 from sklearn.cluster import KMeans
-# from sklearn_extra.cluster import KMedoids
+from sklearn_extra.cluster import KMedoids
 
 
 def simple_kmeans(clusters: int,
@@ -26,16 +26,16 @@ def simple_kmeans(clusters: int,
     return simple_kmeans
 
 
-# def kmedoids(clusters: int,
-#             random_state: int = 1,
-#             ):
+def kmedoids(clusters: int,
+            random_state: int = 1,
+            ):
 
-#     kmedoids = KMedoids(
-#         n_clusters = clusters,
-#         random_state = random_state,
-#         )
+    kmedoids = KMedoids(
+        n_clusters = clusters,
+        random_state = random_state,
+        )
     
-#     return kmedoids
+    return kmedoids
 
 
-# consider a Gaussian Mixture Model (GMM)
+# consider a Gaussian Mixture Model (GMM), agglomerative clustering, or DBSCAN
