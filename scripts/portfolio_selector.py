@@ -30,52 +30,48 @@ def raw_returns(
 
 
 def portfolio_returns(
-    data,
-    portfolio_number: int = 3
+    data: pd.DataFrame,
+    portfolio_number: int = 3,
+    raw_data: pd.DataFrame = None
 ) -> pd.Series:
-    
     """
-    Description
-        Given a portfolio (cluster) number, calculate the daily percentage change of the portfolio.
-        Use the raw data extracted, find the tickers composing the portfolio in a given month.
-        Room to introduce a weighting function to optimize the portfolio further, for now use even weights.
+    Given a portfolio (cluster) number, calculate the daily percentage change of the portfolio.
+    Use the raw data extracted, find the tickers composing the portfolio in a given month.
+    Room to introduce a weighting function to optimize the portfolio further, for now use even weights.
+
+    Args:
+        data (pd.DataFrame): Clustered data with 'cluster' column.
+        portfolio_number (int): Portfolio/cluster number.
+        raw_data (pd.DataFrame): Raw price data (optional, recommended for efficiency).
 
     Returns:
         pd.Series: A series of the daily percentage change of the portfolio
     """
-
-    pf_cluster : pd.DataFrame = data[data['cluster'] == portfolio_number].copy()
+    pf_cluster: pd.DataFrame = data[data['cluster'] == portfolio_number].copy()
     dates = pf_cluster.index.get_level_values('date').unique().tolist()
 
-    final = pd.Series()
+    final = pd.Series(dtype=float)
 
-    # for now, query the raw data in pandas, consider moving to a stored procedure in SQL
-    raw_data = pd.read_csv('raw_data/ftse250_24months_from_2025-01-01.csv')
+    if raw_data is None:
+        raw_data = pd.read_csv('raw_data/ftse250_24months_from_2025-01-01.csv',header=0)
+    
     raw_data['Date'] = pd.to_datetime(raw_data['Date']).dt.date
 
     for date in dates:
-
-        first_bday, last_bday = get_first_last_bd(str(date))
-        # get the list of tickers in that cluster for that month
+        first_bday, last_bday = _get_first_last_bd(str(date))
         tickers = pf_cluster.loc[date].index.tolist()
-        # get the price data for those tickers for all the days in that month
         df_trim = raw_data[(raw_data['Date'] >= first_bday) & (raw_data['Date'] <= last_bday)].copy()
-        # pivot the data to have tickers as columns
         df_pivot = df_trim.pivot(index='Date', columns='Ticker', values='Close')
-        # calculate the percentage change for all tickers
-        pct_change_data = df_pivot.pct_change().fillna(value=float(0))
-        # filter the tickers
+        pct_change_data = df_pivot.pct_change(fill_method=None).fillna(value=float(0))
         filtered_data = pct_change_data[tickers]
-
-        # portfolio weighting (default to equal weights hence mean)
         monthly_average = np.mean(filtered_data, axis=1)
         final = pd.concat([final, monthly_average])
 
     return final
 
 
-def get_first_last_bd(date):
-    # given a date, get the first and last business day of that month
+def _get_first_last_bd(date: str):
+    """Given a date, get the first and last business day of that month."""
     pd_date = pd.to_datetime(str(date))
     first_bday = (pd_date + pd.offsets.BMonthBegin(0)).date()
     last_bday = (pd_date + pd.offsets.BMonthEnd(0)).date()
@@ -92,7 +88,7 @@ def create_plot(
 
     # Add labels and legend
     plt.xlabel('Date', fontsize=12)
-    plt.ylabel('Cumulative Percentage Change (%)', fontsize=12)
+    plt.ylabel('Cumulative Percentage Change \'00s(%)', fontsize=12)
     plt.title('Performance Comparison', fontsize=14)
     plt.legend(fontsize=10, loc='upper left')
 
@@ -115,8 +111,7 @@ def plot_pf_return(
 
 
 def main():
-    pass
-
-
-if __name__ == '__main__':
-    main()
+    test_final = portfolio_returns(data=pd.read_csv('processed_data/clustered_data.csv',header=0),portfolio_number=3)
+    create_plot(x_data=test_final.index,y_data=test_final)
+    plot_pf_return(test_final,portfolio_number=3)
+    plt.show()

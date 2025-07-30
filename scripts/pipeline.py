@@ -19,12 +19,11 @@ def main():
 
     
     # load the raw data
-    filepath = f'raw_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}.csv'
-    if os.path.exists(filepath):
-        try:
-            raw_data = pd.read_csv(filepath)
-        except FileNotFoundError:
-            raw_data = load_data.load(end_date=END_DATE, timeframe=TIMEFRAME)
+    raw_data_path = f'raw_data/ftse250_{int(TIMEFRAME * 12)}months_from_{END_DATE}.csv'
+    if os.path.exists(raw_data_path):
+        raw_data = pd.read_csv(raw_data_path)
+    else:
+        raw_data = load_data.load(end_date=END_DATE, timeframe=TIMEFRAME)
 
     # processor
     pre_enriched_data = processor.pre_enrich(raw_data)
@@ -42,18 +41,19 @@ def main():
     clustered_data.to_csv('processed_data/clustered_data.csv')
 
     # plotting
-    _raw_returns = pd.read_csv('raw_data/FTSE250_ticker_daily_change.csv')
-    _raw_returns['Date'] = pd.to_datetime(_raw_returns['Date'])
+    ftse_returns = pd.read_csv('raw_data/FTSE250_ticker_daily_change.csv')
+    ftse_returns['Date'] = pd.to_datetime(ftse_returns['Date'])
 
     portfolio_selector.create_plot(
-        x_data=_raw_returns['Date'],
-        y_data=_raw_returns['Close'].cumsum())
+        x_data=ftse_returns['Date'],
+        y_data=ftse_returns['Close'].cumsum())
     
     for pf in range(CLUSTERS):
 
         pf_returns = portfolio_selector.portfolio_returns(
             data=clustered_data,
-            portfolio_number=pf
+            portfolio_number=pf,
+            raw_data=None
         )
         portfolio_selector.plot_pf_return(
             portfolio_returns=pf_returns,
